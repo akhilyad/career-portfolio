@@ -1,61 +1,133 @@
-# Akhil Yadav – Portfolio
+<p align="center">
+  <img src="assets/images/portfolio-logo.svg" alt="Akhil Yadav Portfolio logo" width="64" />
+</p>
 
-Personal portfolio built from the CV in `assets/files/Akhil_Yadav_Controls_Engineer_CV.pdf`. Plain HTML, CSS and JavaScript: no build step, no framework, no dependencies besides the Manrope web font.
+<p align="center">
+  <img src="assets/images/portfolio-banner.svg" alt="Akhil Yadav — Control Systems & Automation Portfolio" width="100%" />
+</p>
 
-The visual language is an "industrial technical console": a cool slate/cloud light palette, white cards on soft hairline edges with a diffuse ambient shadow, and a royal industrial blue accent. The layout is built on [vCard](https://github.com/codewithsadee/vcard-personal-portfolio) by codewithsadee (MIT, see `LICENSE`): a contact sidebar plus tabbed pages, with the nav at the bottom below 1024px and top-right from 1024px, where the sidebar also becomes a 290px sticky column beside the content.
+<p align="center">
+  <a href="https://developer.mozilla.org/en-US/docs/Web/HTML"><img alt="HTML5" src="https://img.shields.io/badge/HTML5-Zero_Build-0052CC?style=flat-square&logo=html5&logoColor=white" /></a>
+  <a href="https://developer.mozilla.org/en-US/docs/Web/CSS"><img alt="CSS3" src="https://img.shields.io/badge/CSS3-Container_Queries-2563EB?style=flat-square&logo=css3&logoColor=white" /></a>
+  <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"><img alt="Vanilla JavaScript" src="https://img.shields.io/badge/JavaScript-Vanilla_SPA-45A6AA?style=flat-square&logo=javascript&logoColor=white" /></a>
+  <a href="https://pages.github.com"><img alt="GitHub Pages" src="https://img.shields.io/badge/GitHub_Pages-Static_Host-1E293B?style=flat-square&logo=github&logoColor=white" /></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-64748B?style=flat-square" /></a>
+</p>
 
-## Pages
+**Akhil Yadav — Controls & Automation Portfolio** is a zero-build static single-page application built from the engineering CV in `assets/files/Akhil_Yadav_Controls_Engineer_CV.pdf`. Designed with an industrial technical console aesthetic (cool `#F0F4F9` slate backdrop, hairline cards, cobalt `#0052CC` accents, and `Manrope` + `JetBrains Mono` typography), it runs directly from plain HTML, CSS, and vanilla JavaScript with zero bundler dependencies.
 
-Tabs run in this order, so proof of work comes straight after the summary:
+---
 
-| Tab | Content |
-| --- | --- |
-| About | Summary, six Engineering Scope cards, and the Systems & Industrial Platforms badge grid |
-| Projects | Industrial Projects & Technical Studies: three industrial projects and four modelling and analytics studies as a one-column stack (visual left, text right once the card has room: tablets and windows from about 1220px), with a filter tab bar; project visuals open full size |
-| Skills | The seven CV skill groups, certifications, languages |
-| Resume | Experience and education timeline with every CV bullet (the CV download lives only in the sidebar) |
-| Contact | Email (with a Copy button), LinkedIn, phone and GitHub cards |
+## Contents
 
-Tabs are mirrored in the URL hash, so `index.html#resume` links straight to a page and the back button works. Any element with `data-nav-link="<page>"` switches pages, such as the "let's connect" link in the summary; only navbar tabs show the current page.
+- [Pages and navigation](#pages-and-navigation)
+- [Architecture and interactions](#architecture-and-interactions)
+- [Design tokens](#design-tokens)
+- [Getting started](#getting-started)
+- [Authoring and customization](#authoring-and-customization)
+- [Deployment](#deployment)
+- [Security and repository notes](#security-and-repository-notes)
+- [Credits and license](#credits-and-license)
 
-The Systems & Industrial Platforms grid uses uniform badge plates: logos are contained at 64px, and the CENTUM, STARDOM and TwinCAT product shots fill their plate without distortion. ABB 800xA is the wide featured badge with a "Certified" stamp. Images live in `assets/images/toolbox/` and `assets/images/projects/`.
+---
+
+## Pages and navigation
+
+Five tabbed sections keep proof of work directly behind the engineering summary. Below `1024px`, navigation docks to the viewport bottom; from `1024px` upward, the sidebar pins as a `290px` sticky column beside top-right navigation.
+
+| Tab | Hash | Content & structure |
+| :--- | :--- | :--- |
+| **About** | `#about` | Executive summary with `"let's connect"` (`data-nav-link="contact"`), six **Engineering Scope** cards, and the 10-tile **Systems & Industrial Platforms** grid (`ABB 800xA` certified banner badge plus contained `64px` logos and plate shots for CENTUM VP, STARDOM, and TwinCAT). |
+| **Projects** | `#projects` | Seven single-column case studies (3 industrial controls & safety, 4 modeling & analytics) with dynamic category filters (`all`, `dcs`, `safety`, `solar`, `modelling`), `@container projects` horizontal split layout, outbound report links, and full-size `<dialog>` lightbox previews. |
+| **Skills** | `#skills` | Seven grouped capability cards (`Controls & SCADA`, `Protocols & networks`, `High-voltage & plant equipment`, `Root cause & reliability`, `Software lifecycle & documentation`, `Functional safety`, blue-tinted `Tools` chips) plus Certifications and Languages. |
+| **Resume** | `#resume` | Chronological Experience (`ib vogt GmbH`, `ABB`, `Yokogawa`) and Education (`TU Berlin` MBA, `Amrita` B.Tech) timelines; CV PDF download lives in the sidebar. |
+| **Contact** | `#contact` | Direct cards for Email (with accessible Copy button), LinkedIn, Phone, and GitHub without any contact form backend. |
+
+---
+
+## Architecture and interactions
+
+`assets/js/script.js` coordinates routing, responsive sidebar geometry, category filtering, dialog lightbox display, and clipboard fallbacks in under 170 lines without external libraries:
+
+```mermaid
+flowchart LR
+    H["URL Hash / Popstate or data-nav-link"] --> R["Page Switcher (active + aria-current)"]
+    F["Projects Filter Bar + ArrowLeft/ArrowRight"] --> C["Dynamic Category Counter & Card Filter"]
+    M["Project Visual Click"] --> D["Native dialog Lightbox (--lightbox-plate)"]
+    B["Email Copy Button"] --> CB["navigator.clipboard -> fallback execCommand + aria-live status"]
+    S["Mobile Contact Toggle & Resize"] --> HGT["Measure scrollHeight into --sidebar-open"]
+```
+
+Under the hood:
+- **History-aware tabs**: Clicking any nav button or `data-nav-link` updates `history.pushState(null, "", "#" + name)`, marks `aria-current="page"`, and handles browser back/forward via `popstate`.
+- **Self-updating filter counts**: `script.js` inspects space-separated `data-category` tokens on each `<li class="work-card">` on load to compute pill counts (`7 / 2 / 2 / 1 / 4`).
+- **Plate-aware lightbox**: Opening a `.work-visual-plate` image sets `--lightbox-plate` to `#FFFFFF`, while `.work-visual-cover` photography inherits its dark card frame background. `html:has(dialog[open])` locks page scroll cleanly.
+- **Reduced motion**: `@media (prefers-reduced-motion: reduce)` in `assets/css/style.css` forces transitions/animations to `0.01ms` and resets `scroll-behavior: auto`.
+
+---
 
 ## Design tokens
 
-All visual values live in the `#TOKENS` block at the top of `assets/css/style.css`:
+All visual primitives live in the `#TOKENS` section at the top of `assets/css/style.css`:
 
-- **Colour:** page `#F0F4F9`, cards `#FFFFFF`, insets and plates `#E8EEF5`; ghost chips `#F8FAFC` on a `#E2E8F0` hairline (the Tools card tints them blue); borders `#D8DFE8` / `#BCC7D4`; ink `#1E293B` / `#475569` / `#64748B`; accent `#0052CC` (hover `#2563EB`). A faint 40px engineering grid sits behind the cards. Light scheme only.
-- **Type:** Manrope, sizes 12 / 14 / 16 / 18 / 24 / 26 / 32 px, two weights (400 and 600), 24px line height. JetBrains Mono (400, 600) for technical labels, context tags and chips.
-- **Spacing:** the 16-step scale from 5px to 100px, plus 16px and 24px card-rhythm steps; the page gutter is 16px below 768px and 30px from 768px.
-- **Radius:** `0 20px`, 6 (chips), 8, 12, 14, 20 and 30px.
-- **Elevation and motion:** resting cards use a two-layer ambient shadow (1px contact plus a soft 25px spread), buttons a 1px-3px one, hover and the floating nav a slightly deeper one, dialogs the deepest; 0.25s, 0.3s and 0.5s transitions.
+| Category | Values |
+| :--- | :--- |
+| **Surface & borders** | Page `#F0F4F9` with subtle 40px `--grid-line` overlay, cards `#FFFFFF`, plates `#E8EEF5`, ghost chips `#F8FAFC` on `#E2E8F0`, dividers `#D8DFE8` / `#BCC7D4`. |
+| **Typography & ink** | Strong `#1E293B`, body `#475569`, muted `#64748B`; `Manrope` (`400`, `600`) across `12`–`32px` steps + `JetBrains Mono` (`400`, `600`) for industrial tags and telemetry labels. |
+| **Brand accents** | Primary industrial cobalt `#0052CC`, hover/active `#2563EB`, faint tint `rgba(0, 82, 204, 0.08)`, STARDOM accent `#45A6AA`. Light color scheme only. |
+| **Container breakpoints** | `@container projects (min-width: 600px)` triggers left-visual / right-copy splits (`--work-media: 260px`), widening to `300px` at container `min-width: 760px`. |
 
-Components reference tokens only. Every interactive element has hover, focus-visible and active states. Animations switch off for visitors who prefer reduced motion.
+---
 
-## Run it
+## Getting started
 
-Open `index.html` in a browser, or serve the folder:
+Open `index.html` directly in any modern browser, or serve locally with a static HTTP server:
 
 ```bash
 python -m http.server 5173
 ```
 
-then visit <http://localhost:5173>.
+Then open [http://localhost:5173](http://localhost:5173).
 
-## Editing
+---
 
-All content lives in `index.html`; there is no data file.
+## Authoring and customization
 
-- **Projects:** each card is one `<li class="work-card">`: a 16:9 visual (260px wide beside the text on tablets, 300px on wide desktop cards, full width above the text otherwise), then a `work-body` holding the context and title, bullets, and a `work-foot` footer: chips, plus an optional `work-link` to an outbound file. The footer is the same on every card and pins to the bottom edge. To add one, copy a card and set `data-category` to one or more of `dcs`, `safety`, `solar`, `modelling`, separated by spaces. The filter counts update themselves. Every visual is the same 16:9 frame; pick one modifier: `work-visual-cover` for photos (full bleed) or `work-visual-plate` for diagrams and logos (contained at 80% on a `#E8EEF5` plate, multiply-blended so white-backed artwork takes the plate tone). The lightbox letterbox takes the card's frame colour; plates open on white.
+All content lives directly in `index.html` (no JSON data file or build pipeline):
 
-- **Photo:** `assets/images/avatar.jpg` is the headshot, shown as a circle. Replace it with any square photo (ideally 300px or larger for sharp high-DPI screens); if the file is missing, the "AY" monogram shows instead.
-- **CV download:** replace `assets/files/Akhil_Yadav_Controls_Engineer_CV.pdf` when the CV changes. The sidebar button opens it in a new tab and saves it under the same file name.
-- **Contact:** there is no form. The email card's Copy button copies its `data-copy` value; where the Clipboard API is blocked it falls back to selecting and copying the address the older way.
+| Item | How to update |
+| :--- | :--- |
+| **Add a project card** | Duplicate an existing `<li class="work-card">` inside `#projects`, set space-separated `data-category` tags (`dcs`, `safety`, `solar`, `modelling`), and choose `.work-visual-cover` (full-bleed photo) or `.work-visual-plate` (80% contained diagram/logo with multiply blend on `#E8EEF5`). |
+| **Headshot avatar** | Replace `assets/images/avatar.jpg` (current image is `194×194`; `300px+` square recommended for high-DPI rendering of the `150px` desktop frame). If missing or broken, `onerror="this.remove()"` reveals the crisp `"AY"` CSS monogram fallback. |
+| **CV PDF** | Overwrite `assets/files/Akhil_Yadav_Controls_Engineer_CV.pdf`; the sidebar link opens and downloads the updated file automatically. |
+| **Toolbox & project media** | Stored under `assets/images/toolbox/` (10 WebP files) and `assets/images/projects/` (6 WebP + 1 PNG diagram). |
 
-## Deploy
+---
 
-Any static host works. This folder is pushed to <https://github.com/akhilyad/portfolio> and served by GitHub Pages (Settings > Pages > deploy from the `main` branch, `/ (root)`) at <https://akhilyad.github.io/portfolio/>. All asset paths are relative (`./assets/...`), so the site works from that sub-path. The earlier Next.js version of the site is still in the repo history. The empty `.nojekyll` file tells Pages to serve the files as they are instead of running them through Jekyll, which keeps deploys fast. Static hosts cache aggressively, so after changing CSS or JS a visitor may need a hard refresh.
+## Deployment
 
-## Credits and licence
+Any static host serves the site as-is because every asset path uses `./assets/...` relative resolution and an empty `.nojekyll` marker bypasses Jekyll processing on GitHub Pages.
 
-Layout adapted from vCard, Copyright (c) 2022 codewithsadee, MIT licensed (`LICENSE`). Icons are inline Feather-style strokes plus custom line art. The CV text and personal details are Akhil Yadav's own and are not covered by that licence.
+> [!NOTE]
+> The repository remote is `https://github.com/akhilyad/career-portfolio.git` (which maps to GitHub Pages under `/career-portfolio/` if enabled), while `Akhil_Yadav_Controls_Engineer.md` and earlier repo notes also reference the sibling path `https://github.com/akhilyad/portfolio` (`akhilyad.github.io/portfolio/`). Cache-busting relies on standard static host headers, so CSS/JS edits may require a hard refresh on client browsers.
+
+---
+
+## Security and repository notes
+
+- **Safe DOM updates & links**: `assets/js/script.js` updates text and attributes strictly via `.textContent` and `setAttribute` (no `innerHTML` writes), and external links carry `target="_blank" rel="noopener noreferrer"`.
+- **Minor repo discrepancies to be aware of**:
+  - `assets/images/favicon.svg` retains the legacy dark-and-gold (`#1f1f21` / `#ffdb70`) vCard favicon palette rather than the industrial cobalt palette of `assets/images/portfolio-logo.svg`.
+  - The HTML **Skills** and **Resume** tabs present 7 capability cards mirroring `Engineering Scope` + `Tools`, omitting `"CDCP (in progress)"` and one pricing bullet under `ib vogt GmbH` present in `Akhil_Yadav_Controls_Engineer.md`.
+
+---
+
+## Credits and license
+
+Layout and interactive structure adapted from [vCard](https://github.com/codewithsadee/vcard-personal-portfolio) by codewithsadee under the MIT License (see `LICENSE`). All personal CV content, engineering case studies, and custom diagrams belong to Akhil Yadav and are not covered by that template license.
+
+---
+
+<p align="center">
+  <sub>Akhil Yadav · Controls &amp; Automation Portfolio · Zero-Build Static SPA</sub>
+</p>
